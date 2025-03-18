@@ -61,10 +61,8 @@ const CodeInterface = () => {
         }
       );
       if (outputResponse.data.stdout) {
-
         setOutput(outputResponse.data.stdout);
       } else {
-        console.log("No output received or an error occurred.");
         updateError({
           errorMessage: outputResponse.data.status.description,
           stderr: outputResponse.data.stderr,
