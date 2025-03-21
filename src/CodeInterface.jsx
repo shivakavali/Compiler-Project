@@ -16,6 +16,7 @@ import axios from "axios";
 import arr from "./languages";
 import Challenges from "./Challenges";
 const CodeInterface = () => {
+    // "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3"
   const [code, setCode] = useState("// Write your code here\n");
   const [submissionkey, setSubmissionKey] = useState("");
   const [APIKey, setAPIKey] = useState(
@@ -33,6 +34,7 @@ const CodeInterface = () => {
 
   const handleCodeSubmit = async () => {
     try {
+      // First API call - Submit the code
       const response = await axios.post(
         "https://judge029.p.rapidapi.com/submissions",
         {
@@ -45,21 +47,32 @@ const CodeInterface = () => {
         {
           headers: {
             "x-rapidapi-key": APIKey,
-            "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+            "x-rapidapi-host": "judge029.p.rapidapi.com",
             "Content-Type": "application/json",
+            "useQueryString": true, // Important for RapidAPI requests
           },
         }
       );
-      setSubmissionKey(response.data.token);
-
-      const outputResponse = await axios.get(`https://judge029.p.rapidapi.com/submissions/${submissionkey}`,
+  
+      const token = response.data.token;
+      setSubmissionKey(token);
+      console.log("Submission Token:", token);
+  
+      // Wait for 2 seconds before fetching output (to allow processing)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+  
+      // Second API call - Fetch submission result
+      const outputResponse = await axios.get(
+        `https://judge029.p.rapidapi.com/submissions/${token}`,
         {
           headers: {
             "x-rapidapi-key": APIKey,
-            "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+            "x-rapidapi-host": "judge029.p.rapidapi.com",
+            "useQueryString": true, // Important for RapidAPI requests
           },
         }
       );
+  
       if (outputResponse.data.stdout) {
         setOutput(outputResponse.data.stdout);
       } else {
@@ -73,12 +86,15 @@ const CodeInterface = () => {
       console.error("Error submitting code:", e);
     }
   };
-  console.log(`${output}, ${challenge.output}, ${output === challenge.output}`);
+  
+  console.log(`${output.trim()}, ${challenge.output.trim()}, ${output.trim() === challenge.output.trim()}`);
+
   const getHeadingColor = () => {
-    if (output == challenge.output) return "green";
-    else if (output && output !== challenge.output) return "red";
+    if (output?.trim() === challenge.output?.trim()) return "green";
+    else if (output) return "red";
     return "inherit";
   };
+  
 
   return (
     <Box display="flex" sx={{ minHeight: "100vh" }}>
@@ -140,7 +156,7 @@ const CodeInterface = () => {
         <Grid container spacing={1} mt={1}>
           {/* Test Case Heading */}
           <Typography variant="h5">
-            Test Case 0
+            Test Case
           </Typography>
 
           {/* Input Section */}
@@ -175,7 +191,7 @@ const CodeInterface = () => {
             <>
               {/* Output Section */}
               <Grid item xs={6}>
-                <Typography variant="h6" sx={{ color: getHeadingColor() }}>
+                <Typography variant="h6" sx={{ color  : getHeadingColor() }}>
                   Output
                 </Typography>
                 <TextField
