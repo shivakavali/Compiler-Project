@@ -1,132 +1,193 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  AppBar,
-  Toolbar,
-  Typography,
   Box,
   Paper,
   Button,
-  TextField,
-  Grid,
+  Typography,
   Select,
   MenuItem,
+  Grid,
+  TextField,
 } from "@mui/material";
 import Editor from "@monaco-editor/react";
 import axios from "axios";
 import arr from "./languages";
-import Challenges from "./Challenges";
+
 const CodeInterface = () => {
-    // "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3"
-  const [code, setCode] = useState("// Write your code here\n");
-  const [submissionkey, setSubmissionKey] = useState("");
-  const [APIKey, setAPIKey] = useState(
-    "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3"
-  );
-  const [langID, setLangID] = useState("62");
-  const [challegeIndex, setChallengeIndex] = useState("2");
-  const [challenge, setChallenge] = useState(Challenges[challegeIndex]);
+  const [code, setCode] = useState("Your code goes here!");
+  const [langID, setLangID] = useState("71");
+  const [challengeIndex, setChallengeIndex] = useState(1);
+  const [challenge, setChallenge] = useState(1);
   const [output, setOutput] = useState(null);
-  const [error, updateError] = useState(null);
+  const [error, setError] = useState(null);
+  const [questions, setQuestions] = useState([]);
+
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      const rules = sheet.cssRules;
+    } catch (e) {}
+  });
 
   useEffect(() => {
-    console.log(code);
-  }, [code]);
-
-  const handleCodeSubmit = async () => {
-    try {
-      // First API call - Submit the code
-      const response = await axios.post(
-        "https://judge029.p.rapidapi.com/submissions",
-        {
-          source_code: code,
-          language_id: langID,
-          stdin: challenge.input,
-          expected_output: challenge.output,
-          wait: "false",
-        },
-        {
-          headers: {
-            "x-rapidapi-key": APIKey,
-            "x-rapidapi-host": "judge029.p.rapidapi.com",
-            "Content-Type": "application/json",
-            "useQueryString": true, // Important for RapidAPI requests
-          },
-        }
-      );
-  
-      const token = response.data.token;
-      setSubmissionKey(token);
-      console.log("Submission Token:", token);
-  
-      // Wait for 2 seconds before fetching output (to allow processing)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-  
-      // Second API call - Fetch submission result
-      const outputResponse = await axios.get(
-        `https://judge029.p.rapidapi.com/submissions/${token}`,
-        {
-          headers: {
-            "x-rapidapi-key": APIKey,
-            "x-rapidapi-host": "judge029.p.rapidapi.com",
-            "useQueryString": true, // Important for RapidAPI requests
-          },
-        }
-      );
-  
-      if (outputResponse.data.stdout) {
-        setOutput(outputResponse.data.stdout);
-      } else {
-        updateError({
-          errorMessage: outputResponse.data.status.description,
-          stderr: outputResponse.data.stderr,
-          compile_output: outputResponse.data.compile_output,
-        });
+    async function fetchQuestions() {
+      try {
+        const response = await axios.get(
+          "https://capstone-1-y2mc.onrender.com/api/allQuestionNames",
+          {
+            headers: {
+              Authorization:
+                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9DVVNUT01FUiIsInN1YiI6InNoaXZhMTIzIiwiaWF0IjoxNzQzODU5NDQ0LCJleHAiOjE3NDM4NjMwNDR9.Lq04qq5zdjz1RguIndrqEMrerFBeQwxcGR5P5omGZZA",
+            },
+          }
+        );
+        setQuestions(response.data);
+      } catch (err) {
+        console.error(
+          "Failed to fetch questions:",
+          err.response?.data || err.message
+        );
       }
-    } catch (e) {
-      console.error("Error submitting code:", e);
     }
+
+    fetchQuestions();
+  }, []);
+
+  useEffect(() => {
+    const fetchQuestionById = async () => {
+      try {
+        const response = await axios.get(
+          `https://capstone-1-y2mc.onrender.com/api/getQuestionById/${challengeIndex}`,
+          {
+            headers: {
+              Authorization:
+                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9DVVNUT01FUiIsInN1YiI6InNoaXZhMTIzIiwiaWF0IjoxNzQzODU5NDQ0LCJleHAiOjE3NDM4NjMwNDR9.Lq04qq5zdjz1RguIndrqEMrerFBeQwxcGR5P5omGZZA",
+            },
+          }
+        );
+        setChallenge(response.data);
+      } catch (e) {
+        console.log("Error fetching question:", e);
+      }
+    };
+
+    fetchQuestionById();
+  }, [questions]);
+
+  const handleBatchSubmission = async (isRealTest) => {
+    let testCases = [];
+  
+    if (isRealTest) {
+      if (
+        Array.isArray(challenge.actualTestCaseInput) &&
+        Array.isArray(challenge.actualTestCaseOutput)
+      ) {
+        testCases = challenge.actualTestCaseInput.map((input, idx) => ({
+          input,
+          expectedOutput: challenge.actualTestCaseOutput[idx],
+        }));
+      } else {
+        console.warn("No actual test cases found!");
+        setError("No actual test cases available.");
+        return;
+      }
+    } else {
+      testCases = challenge.sampleTestCases || [];
+    }
+  
+    const outputs = [];
+    console.log("Running test cases:", testCases);
+  
+    for (const test of testCases) {
+      try {
+        const submissionRes = await axios.post(
+          `https://judge0-ce.p.rapidapi.com/submissions`,
+          {
+            language_id: langID,
+            source_code: btoa(code),
+            stdin: btoa(JSON.stringify(test.input)),
+            expected_output: btoa(
+              JSON.stringify(test.output || test.expectedOutput || "")
+            ),
+          },
+          {
+            params: { base64_encoded: "true" },
+            headers: {
+              "x-rapidapi-key":
+                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+              "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+  
+        const token = submissionRes.data.token;
+  
+        let result = null;
+        while (!result || result.status?.id <= 2) {
+          const res = await axios.get(
+            `https://judge0-ce.p.rapidapi.com/submissions/${token}`,
+            {
+              params: {
+                base64_encoded: "false",
+                fields: "*",
+              },
+              headers: {
+                "x-rapidapi-key":
+                  "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+                "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+              },
+            }
+          );
+          result = res.data;
+          console.log(result);
+          if (result.status?.id <= 2)
+            await new Promise((r) => setTimeout(r, 1500));
+        }
+  
+        outputs.push(result);
+      } catch (err) {
+        outputs.push({ error: err.message });
+      }
+    }
+    console.log(outputs);
+    setOutput(outputs);
+    setError(null);
   };
   
-  console.log(`${output.trim()}, ${challenge.output.trim()}, ${output.trim() === challenge.output.trim()}`);
-
-  const getHeadingColor = () => {
-    if (output?.trim() === challenge.output?.trim()) return "green";
-    else if (output) return "red";
-    return "inherit";
-  };
-  
-
   return (
     <Box display="flex" sx={{ minHeight: "100vh" }}>
-      {/* Left Section - Question */}
       <Paper elevation={3} sx={{ width: "50%", p: 3, overflowY: "auto" }}>
         <Typography variant="h4" gutterBottom>
-          {challenge.Heading}
+          {challenge.questionName}
         </Typography>
-        <Typography variant="body1" className="c">
-          <Typography variant="p">{challenge.Statement}</Typography>
-          <Box className="challenge-input-format">
-            <Typography variant="h6">Input Format</Typography>
-            <Typography variant="p">{challenge.sampleInputFormat}</Typography>
-          </Box>
-          <Box className="challenge-output-format">
-            <Typography variant="h6">Output Format</Typography>
-            <Typography variant="p">{challenge.sampleInputFormat}</Typography>
-          </Box>
-          <Box className="challenge-input">
-            <Typography variant="h6">Input</Typography>
-            <Typography variant="p">{challenge.input}</Typography>
-          </Box>
-          <Box className="challenge-output">
-            <Typography variant="h6">Output</Typography>
-            <Typography variant="p">{challenge.output}</Typography>
-          </Box>
-        </Typography>
+        <Typography variant="body1">{challenge.questionDescription}</Typography>
+
+        
+
+        {challenge.sampleTestCases &&
+          challenge.sampleTestCases.map((test, index) => (
+            <Box key={index} mt={2}>
+              <Typography variant="subtitle1">Example {index + 1}</Typography>
+              <Typography>Input: {JSON.stringify(test.input)}</Typography>
+              <Typography>
+                Expected Output: {JSON.stringify(test.output)}
+              </Typography>
+            </Box>
+          ))}
+
+        <Box mt={2}>
+          <Typography variant="h6">Difficulty</Typography>
+          <Typography>{challenge.questionDifficulty}</Typography>
+        </Box>
+
+        <Box mt={2}>
+          <Typography variant="h6">Topics</Typography>
+          <Typography>{challenge.topics?.join(", ")}</Typography>
+        </Box>
       </Paper>
 
-      {/* Right Section - Code Editor */}
       <Box flex={1} display="flex" flexDirection="column" p={2}>
-        <Box display="flex" flexDirection="row" justifyContent="space-between">
+        <Box display="flex" justifyContent="space-between">
           <Typography variant="h6">Code Editor</Typography>
           <Select value={langID} onChange={(e) => setLangID(e.target.value)}>
             {arr.map((item) => (
@@ -136,105 +197,64 @@ const CodeInterface = () => {
             ))}
           </Select>
         </Box>
-        <Paper elevation={3} sx={{ flex: 1, p: 1, mb: 1 }}>
+        <Paper elevation={3} sx={{ flex: 1, p: 1, mb: 2 }}>
           <Editor
             height="50vh"
-            defaultLanguage="java"
-            value={code || ""}
+            defaultLanguage="python"
+            value={code}
             onChange={(val) => setCode(val || "")}
           />
         </Paper>
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ alignSelf: "flex-end" }}
-          onClick={handleCodeSubmit}
-        >
-          Submit
-        </Button>
-        {/* Input/Output Section */}
-        <Grid container spacing={1} mt={1}>
-          {/* Test Case Heading */}
-          <Typography variant="h5">
-            Test Case
-          </Typography>
+        <Box display="flex" justifyContent="space-between">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleBatchSubmission(false)}
+          >
+            Run
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleBatchSubmission(true)}
+          >
+            Submit
+          </Button>
+        </Box>
 
-          {/* Input Section */}
-          <Grid item xs={12}>
-            <Typography variant="h6">
-              Input
-            </Typography>
-            <TextField
-              fullWidth
-              variant="outlined"
-              multiline
-              value={challenge.input}
-            />
-          </Grid>
-
-          {/* Conditional Rendering: Show Output/Error */}
+        <Grid container spacing={1} mt={2}>
           {error ? (
             <Grid item xs={12}>
-              <Typography variant="h6">Error</Typography>
+              <Typography color="error">Error</Typography>
               <TextField
                 fullWidth
                 variant="outlined"
                 multiline
                 minRows={4}
-                value={`Error: ${error.errorMessage}\n\n${
-                  error.compile_output || error.stderr
-                }`}
-                sx={{ borderColor: "red" }} // Error styling
+                value={JSON.stringify(error, null, 2)}
               />
             </Grid>
           ) : (
-            <>
-              {/* Output Section */}
-              <Grid item xs={6}>
-                <Typography variant="h6" sx={{ color  : getHeadingColor() }}>
-                  Output
+            output?.map((res, index) => (
+              <Grid item xs={12} key={index}>
+                <Box display="flex" justifyContent="space-between" sx={{ color: `${(res.status.id == 4) ? "#B22222" : "#d4edda"}` }}>
+                <Typography variant="subtitle1">
+                  Test Case {index + 1}
                 </Typography>
+                <Typography>{ res.status.description}</Typography>
+                </Box>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={2}
                   variant="outlined"
-                  value={output}
+                  value={res.stdout || res.stderr}
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderColor: getHeadingColor(),
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: getHeadingColor(),
-                    },
-                    "& .MuiInputBase-input": {
-                      color: getHeadingColor(),
-                    },
+                    backgroundColor: res.status == 3 ? "#d4edda" : "#f8d7da",
                   }}
                 />
               </Grid>
-
-              {/* Expected Output Section */}
-              <Grid item xs={6}>
-                <Typography variant="h6" sx={{ color: getHeadingColor() }}>
-                  Expected Output
-                </Typography>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  value={challenge.output}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderColor: getHeadingColor(),
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: getHeadingColor(),
-                    },
-                    "& .MuiInputBase-input": {
-                      color: getHeadingColor(),
-                    },
-                  }}
-                />
-              </Grid>
-            </>
+            ))
           )}
         </Grid>
       </Box>

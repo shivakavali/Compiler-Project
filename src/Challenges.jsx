@@ -1,50 +1,94 @@
 const Challenges = [
   {
-    Heading: "Print Hellow World",
-    Statement:
-      "Write a program that takes a string input and prints 'Hello, World.' followed by the input string on a new line.",
-    sampleInputFormat: "A single line containing a string.",
-    sampleOutputFormat:
-      "The first line should print 'Hello, World.'. The second line should print the input string.",
-    input: "Welcome to 30 Days of Code!",
-    output: "Hello, World.\nWelcome to 30 Days of Code!",
+     "id": "65f8e9b2c4d1a9a7e6f7b0e1",
+     "questionId": 101,
+     "questionName": "Hello World",
+     "questionDescription": "Write a program that takes a string input and prints it.",
+     "sampleTestCases": [
+        {
+           "input": "Hello, World!",
+           "expectedOutput": "Hello, World!"
+        },
+        {
+           "input": "Hello, World!",
+           "expectedOutput": "Hello, World!"
+        },
+        
+     ],
+     "actualTestCaseInput": ["Testing"],
+     "actualTestCaseOutput": ["Testing"],
+     "topics": ["Basics", "Input/Output"],
+     "questionDifficulty": "EASY",
+     "questionSource": "Custom"
   },
   {
-    Heading: "Sum of Two Numbers",
-    Statement:
-      "Write a program that takes two integers as input and prints their sum.",
-    sampleInputFormat: "Two space-separated integers.",
-    sampleOutputFormat:
-      "A single integer representing the sum of the two numbers.",
-    input: "5 7",
-    output: "12",
+     "id": "65f8e9b2c4d1a9a7e6f7b0e2",
+     "questionId": 102,
+     "questionName": "Reverse a String",
+     "questionDescription": "Write a function that reverses a string.",
+     "sampleTestCases": [
+        {
+           "input": "hello",
+           "expectedOutput": "olleh"
+        }
+     ],
+     "actualTestCaseInput": ["world"],
+     "actualTestCaseOutput": ["dlrow"],
+     "topics": ["Strings"],
+     "questionDifficulty": "EASY",
+     "questionSource": "CodeForces"
   },
   {
-    Heading: "Reverse a String",
-    Statement:
-      "Write a program that takes a string and prints it in reverse order.",
-    sampleInputFormat: "A single line containing a string.",
-    sampleOutputFormat: "The reversed string on a single line.",
-    input: "hello",
-    output: "olleh",
+     "id": "65f8e9b2c4d1a9a7e6f7b0e3",
+     "questionId": 103,
+     "questionName": "Find the Missing Number",
+     "questionDescription": "Given an array containing n distinct numbers in the range [0, n], find the missing number.",
+     "sampleTestCases": [
+        {
+           "input": {"nums": [3,0,1]},
+           "expectedOutput": 2
+        }
+     ],
+     "actualTestCaseInput": [{"nums": [9,6,4,2,3,5,7,0,1]}],
+     "actualTestCaseOutput": [8],
+     "topics": ["Math", "Bit Manipulation"],
+     "questionDifficulty": "MEDIUM",
+     "questionSource": "LeetCode"
   },
   {
-    Heading: "Factorial of a Number",
-    Statement:
-      "Write a program that calculates the factorial of a given non-negative integer.",
-    sampleInputFormat: "A single integer n (0 ≤ n ≤ 10).",
-    sampleOutputFormat: "A single integer representing n! (n factorial).",
-    input: "5",
-    output: "120",
+     "id": "65f8e9b2c4d1a9a7e6f7b0e4",
+     "questionId": 104,
+     "questionName": "Valid Parentheses",
+     "questionDescription": "Given a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+     "sampleTestCases": [
+        {
+           "input": "()[]{}",
+           "expectedOutput": true
+        }
+     ],
+     "actualTestCaseInput": ["(]"],
+     "actualTestCaseOutput": [false],
+     "topics": ["Stack", "Strings"],
+     "questionDifficulty": "MEDIUM",
+     "questionSource": "LeetCode"
   },
   {
-    Heading: "Check for Palindrome",
-    Statement:
-      "Write a program that calculates the factorial of a given non-negative integer.",
-    sampleInputFormat: "A single integer n (0 ≤ n ≤ 10).",
-    sampleOutputFormat: "A single integer representing n! (n factorial).",
-    input: "5",
-    output: "120",
-  },
-];
+     "id": "65f8e9b2c4d1a9a7e6f7b0e5",
+     "questionId": 105,
+     "questionName": "Merge Two Sorted Lists",
+     "questionDescription": "Merge two sorted linked lists and return it as a sorted list.",
+     "sampleTestCases": [
+        {
+           "input": {"l1": [1,2,4], "l2": [1,3,4]},
+           "expectedOutput": [1,1,2,3,4,4]
+        }
+     ],
+     "actualTestCaseInput": [{"l1": [2,5], "l2": [1,3,6]}],
+     "actualTestCaseOutput": [[1,2,3,5,6]],
+     "topics": ["Linked List", "Recursion"],
+     "questionDifficulty": "HARD",
+     "questionSource": "LeetCode"
+  }
+]
+
 export default Challenges;
