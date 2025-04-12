@@ -191,13 +191,6 @@ arr = [
 
 
 
-
-
-
-
-
-
-
 HTML Element	        Material-UI Component	                    Usage
 <div>          	        <Box> / <Paper>	                            Layout and containers
 <h1> - <h6>	            <Typography variant="h1-h6">	            Headings
