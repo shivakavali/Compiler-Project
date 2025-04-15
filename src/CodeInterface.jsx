@@ -19,7 +19,6 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
   const [challenge, setChallenge] = useState({});
   const [output, setOutput] = useState(null);
   const [error, setError] = useState(null);
-  
 
   useEffect(() => {
     const fetchQuestionById = async () => {
@@ -33,7 +32,7 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
           }
         );
         setChallenge(response.data);
-        // console.log(response.data);
+        console.log(response.data);
       } catch (e) {
         console.log("Error fetching question:", e);
       }
@@ -41,87 +40,86 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
 
     fetchQuestionById();
   }, [challengeIndex]);
-
-  const handleBatchSubmission = async (isRealTest) => {
-    let testCases = [];
-
-    if (isRealTest) {
-      if (
-        Array.isArray(challenge.actualTestCaseInput) &&
-        Array.isArray(challenge.actualTestCaseOutput)
-      ) {
-        testCases = challenge.actualTestCaseInput.map((input, idx) => ({
-          input,
-          expectedOutput: challenge.actualTestCaseOutput[idx],
-        }));
-      } else {
-        console.warn("No actual test cases found!");
-        setError("No actual test cases available.");
-        return;
-      }
-    } else {
-      testCases = challenge.sampleTestCases || [];
+  
+  const parseOutput = (output) => {
+    try {
+      const parsed = JSON.parse(output?.trim());
+      return parsed;
+    } catch (err) {
+      return output; // If it fails to parse, return the raw output
     }
-
-    const outputs = [];
-    console.log("Running test cases:", testCases);
-
-    for (const test of testCases) {
-      try {
-        const submissionRes = await axios.post(
-          `https://judge0-ce.p.rapidapi.com/submissions`,
-          {
-            language_id: langID,
-            source_code: btoa(code),
-            stdin: btoa(JSON.stringify(test.input)),
-            expected_output: btoa(
-              JSON.stringify(test.output || test.expectedOutput || "")
-            ),
-          },
-          {
-            params: { base64_encoded: "true" },
-            headers: {
-              "x-rapidapi-key":
-                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
-              "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const token = submissionRes.data.token;
-
-        let result = null;
-        while (!result || result.status?.id <= 2) {
-          const res = await axios.get(
-            `https://judge0-ce.p.rapidapi.com/submissions/${token}`,
-            {
-              params: {
-                base64_encoded: "false",
-                fields: "*",
-              },
-              headers: {
-                "x-rapidapi-key":
-                  "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
-                "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
-              },
-            }
-          );
-          result = res.data;
-          console.log(result);
-          if (result.status?.id <= 2)
-            await new Promise((r) => setTimeout(r, 1500));
-        }
-
-        outputs.push(result);
-      } catch (err) {
-        outputs.push({ error: err.message });
-      }
-    }
-    // console.log(outputs);
-    setOutput(outputs);
-    setError(null);
   };
+  
+
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
+const handleBatchSubmission = async (isRealCases) => {
+  const testCases = Array.isArray(
+    isRealCases ? challenge.actualTestCases : challenge.sampleTestCases
+  )
+    ? isRealCases
+      ? challenge.actualTestCases
+      : challenge.sampleTestCases
+    : [];
+
+  if (!testCases.length) {
+    setError("No test cases found.");
+    return;
+  }
+
+  const outputs = [];
+
+  for (const testCase of testCases) {
+    try {
+      const response = await axios.post(
+        "https://judge0-ce.p.rapidapi.com/submissions",
+        {
+          language_id: parseInt(langID),
+          source_code: code,
+          stdin: JSON.stringify(testCase.input),
+        },
+        {
+          params: { base64_encoded: "false", wait: "true" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-rapidapi-key": "23129ead31msh0dc114176a49a8cp11cf50jsnb522c12cde7d",
+            "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+          },
+        }
+      );
+
+      const actual = parseOutput(response.data.stdout);
+      const expected = testCase.output;
+
+      const isSuccess = JSON.stringify(actual) === JSON.stringify(expected);
+      const statusDesc = response.data.status?.description || "No Status";
+
+      outputs.push({
+        input: testCase.input,
+        expectedOutput: expected,
+        actualOutput: actual,
+        success: isSuccess,
+        status: { description: isSuccess ? "Accepted" : "Wrong Answer" }, // force override
+      });
+
+      await sleep(1500); // RATE LIMIT SAFETY
+
+    } catch (err) {
+      outputs.push({
+        input: testCase.input,
+        expectedOutput: testCase.output,
+        actualOutput: null,
+        success: false,
+        error: err.message,
+        status: { description: "Request Error" },
+      });
+    }
+  }
+
+  setOutput(outputs);
+  setError(null);
+};
+
 
   return (
     <Box display="flex" sx={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
@@ -135,7 +133,7 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
           {challenge.questionName}
         </Typography>
         <Typography variant="body1" gutterBottom>
-          {challenge.questionDescription}   
+          {challenge.questionDescription}
         </Typography>
 
         {challenge.sampleTestCases?.map((test, index) => (
@@ -187,8 +185,7 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
           <Editor
             height="50vh"
             defaultLanguage="python"
-            // value={code}
-            value=""
+            value={code}
             onChange={(val) => setCode(val || "")}
           />
         </Paper>
@@ -231,23 +228,26 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
                   display="flex"
                   justifyContent="space-between"
                   sx={{
-                    color: res.status.id === 4 ? "error.main" : "success.main",
+                    color: res.success ? "green" : "red",
                   }}
                 >
                   <Typography variant="subtitle1">
                     Test Case {index + 1}
                   </Typography>
-                  <Typography>{res.status.description}</Typography>
+                  <Typography>{res.status?.description || "Error"}</Typography>
                 </Box>
                 <TextField
                   fullWidth
                   multiline
                   minRows={2}
                   variant="outlined"
-                  value={res.stdout || res.stderr}
+                  value={
+                    Array.isArray(res.actualOutput)
+                      ? `[${res.actualOutput.join(", ")}]`
+                      : res.actualOutput ?? res.error
+                  }
                   sx={{
-                    backgroundColor:
-                      res.status.id === 3 ? "#e6ffe6" : "#ffe6e6",
+                    backgroundColor: res.success ? "#e6ffe6" : "#ffe6e6",
                     borderRadius: 1,
                   }}
                 />

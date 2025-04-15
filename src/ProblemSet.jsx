@@ -57,6 +57,7 @@ const ProblemSet = ({ userToken, setChallengeIndex }) => {
   }, [questionNames]);
 
   const handleQuestion = (e) => {
+    e.preventDefault();
     const index = e.currentTarget.getAttribute("data-index");
     let question = e.currentTarget.getAttribute("data-question");
     question = question.toLowerCase().replace(/\s+/g, "-");
@@ -84,7 +85,7 @@ const ProblemSet = ({ userToken, setChallengeIndex }) => {
           >
             <Paper
               elevation={3}
-              data-index={index}
+              data-index={index+1}
               data-question={item.questionName}
               onClick={(e) => handleQuestion(e)}
               sx={{
