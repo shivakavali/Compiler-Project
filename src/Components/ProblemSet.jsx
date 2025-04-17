@@ -3,58 +3,8 @@ import axios from "axios";
 import { Container, Typography, Paper, Box } from "@mui/material";
 import { Navigate, useNavigate } from "react-router-dom";
 
-const ProblemSet = ({ userToken, setChallengeIndex }) => {
+const ProblemSet = ({setChallengeIndex, questionsData}) => {
   const navigate = useNavigate();
-  const [questionNames, setQuestionNames] = useState([]);
-  const [questionsData, setQuestionsData] = useState([]);
-
-  useEffect(() => {
-    async function fetchQuestions() {
-      try {
-        const response = await axios.get(
-          "https://capstone-1-y2mc.onrender.com/api/allQuestionNames",
-          {
-            headers: {
-              Authorization: `Bearer ${userToken}`,
-            },
-          }
-        );
-        setQuestionNames(response.data);
-      } catch (err) {
-        console.error(
-          "Failed to fetch questions:",
-          err.response?.data || err.message
-        );
-      }
-    }
-
-    fetchQuestions();
-  }, []);
-
-  useEffect(() => {
-    async function fetchAllQuestions() {
-      try {
-        const promises = questionNames.map((_, index) =>
-          axios.get(
-            `https://capstone-1-y2mc.onrender.com/api/getQuestionById/${index+1}`,
-            {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-            }
-          )
-        );
-        const responses = await Promise.all(promises);
-        const allQuestions = responses.map((res) => res.data);
-
-        setQuestionsData(allQuestions);
-      } catch (e) {
-        console.log("Error fetching questions:", e);
-      }
-    }
-
-    fetchAllQuestions();
-  }, [questionNames]);
 
   const handleQuestion = (e) => {
     e.preventDefault();
@@ -63,6 +13,7 @@ const ProblemSet = ({ userToken, setChallengeIndex }) => {
     question = question.toLowerCase().replace(/\s+/g, "-");
     console.log(index, question);
     setChallengeIndex(index);
+    localStorage.setItem("challenge-index", index);
     navigate(`/problemset/${question}`);
   };
 
@@ -90,7 +41,7 @@ const ProblemSet = ({ userToken, setChallengeIndex }) => {
               onClick={(e) => handleQuestion(e)}
               sx={{
                 display: "flex",
-                flexDirection: "column", // stack vertically
+                flexDirection: "column",
                 p: 1,
                 my: 2,
                 "&:hover": {

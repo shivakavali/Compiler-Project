@@ -1,4 +1,7 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Box,
   Paper,
@@ -10,15 +13,15 @@ import {
   TextField,
 } from "@mui/material";
 import Editor from "@monaco-editor/react";
-import axios from "axios";
 import arr from "./languages";
 
-const CodeInterface = ({ userToken, challengeIndex }) => {
+const CodeInterface = ({ userToken, solvedQuestionsData }) => {
   const [code, setCode] = useState("Your code goes here!");
   const [langID, setLangID] = useState("71");
   const [challenge, setChallenge] = useState({});
   const [output, setOutput] = useState(null);
   const [error, setError] = useState(null);
+  const challengeIndex = localStorage.getItem("challenge-index");
 
   useEffect(() => {
     const fetchQuestionById = async () => {
@@ -37,89 +40,171 @@ const CodeInterface = ({ userToken, challengeIndex }) => {
         console.log("Error fetching question:", e);
       }
     };
-
     fetchQuestionById();
   }, [challengeIndex]);
-  
+
   const parseOutput = (output) => {
     try {
       const parsed = JSON.parse(output?.trim());
       return parsed;
     } catch (err) {
-      return output; // If it fails to parse, return the raw output
+      return output;
     }
   };
-  
 
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const handleBatchSubmission = async (isRealCases) => {
-  const testCases = Array.isArray(
-    isRealCases ? challenge.actualTestCases : challenge.sampleTestCases
-  )
-    ? isRealCases
+  const handleTestcasesRun = async () => {
+    const testCases = Array.isArray(challenge.sampleTestCases)
+      ? challenge.sampleTestCases
+      : [];
+
+    if (!testCases.length) {
+      setError("No test cases found.");
+      return;
+    }
+
+    const outputs = [];
+
+    for (const testCase of testCases) {
+      try {
+        const response = await axios.post(
+          "https://judge0-ce.p.rapidapi.com/submissions",
+          {
+            language_id: parseInt(langID),
+            source_code: code,
+            stdin: JSON.stringify(testCase.input),
+          },
+          {
+            params: { base64_encoded: "false", wait: "true" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-rapidapi-key":
+                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+              "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+            },
+          }
+        );
+
+        console.log(response.data);
+        const actual = parseOutput(response.data.stdout);
+        const error = parseOutput(response.data.stderr);
+        const expected = testCase.output;
+
+        const isSuccess = JSON.stringify(actual) === JSON.stringify(expected);
+        const statusDesc = response.data.status?.description || "No Status";
+
+        outputs.push({
+          input: testCase.input,
+          expectedOutput: expected,
+          actualOutput: actual ? actual : error,
+          success: isSuccess,
+          status: { description: isSuccess ? "Accepted" : statusDesc }, // force override
+        });
+
+        await sleep(1500);
+      } catch (err) {
+        outputs.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: null,
+          success: false,
+          error: err.message,
+          status: { description: "Request Error" },
+        });
+      }
+    }
+
+    setOutput(outputs);
+    setError(null);
+  };
+
+  const handleTestcasesSubmission = async () => {
+    const testCases = Array.isArray(challenge.actualTestCases)
       ? challenge.actualTestCases
-      : challenge.sampleTestCases
-    : [];
+      : [];
 
-  if (!testCases.length) {
-    setError("No test cases found.");
-    return;
-  }
+    if (!testCases.length) {
+      setError("No test cases found.");
+    }
 
-  const outputs = [];
+    const outputs = [];
 
-  for (const testCase of testCases) {
+    for (const testCase of testCases) {
+      try {
+        const response = await axios.post(
+          "https://judge0-ce.p.rapidapi.com/submissions",
+          {
+            language_id: parseInt(langID),
+            source_code: code,
+            stdin: JSON.stringify(testCase.input),
+          },
+          {
+            params: { base64_encoded: "false", wait: "true" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-rapidapi-key":
+                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+              "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+            },
+          }
+        );
+
+        const actual = parseOutput(response.data.stdout);
+        const expected = testCase.output;
+        const isSuccess = JSON.stringify(actual) === JSON.stringify(expected);
+        console.log("running API");
+
+        if (!isSuccess) {
+          outputs.push({
+            input: testCase.input,
+            expectedOutput: expected,
+            actualOutput: actual,
+            success: false,
+            status: { description: "Wrong Answer" },
+          });
+          setOutput(outputs);
+          return;
+        }
+
+        await sleep(1500);
+      } catch (err) {
+        outputs.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: null,
+          success: false,
+          error: err.message,
+          status: { description: "Request Error" },
+        });
+        setOutput(outputs);
+        return;
+      }
+    }
+
+    setOutput(outputs);
+    toast.success("All test cases passed. Solution Accepted!");
+
     try {
+      console.log("Sending to:", challengeIndex);
+      console.log("Token:", userToken);
+
       const response = await axios.post(
-        "https://judge0-ce.p.rapidapi.com/submissions",
+        `https://capstone-1-y2mc.onrender.com/api/solved/${challengeIndex}`,
+        null,
         {
-          language_id: parseInt(langID),
-          source_code: code,
-          stdin: JSON.stringify(testCase.input),
-        },
-        {
-          params: { base64_encoded: "false", wait: "true" },
           headers: {
+            Authorization: `Bearer ${userToken}`,
             "Content-Type": "application/json",
-            "x-rapidapi-key": "23129ead31msh0dc114176a49a8cp11cf50jsnb522c12cde7d",
-            "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
           },
         }
       );
-
-      const actual = parseOutput(response.data.stdout);
-      const expected = testCase.output;
-
-      const isSuccess = JSON.stringify(actual) === JSON.stringify(expected);
-      const statusDesc = response.data.status?.description || "No Status";
-
-      outputs.push({
-        input: testCase.input,
-        expectedOutput: expected,
-        actualOutput: actual,
-        success: isSuccess,
-        status: { description: isSuccess ? "Accepted" : "Wrong Answer" }, // force override
-      });
-
-      await sleep(1500); // RATE LIMIT SAFETY
-
     } catch (err) {
-      outputs.push({
-        input: testCase.input,
-        expectedOutput: testCase.output,
-        actualOutput: null,
-        success: false,
-        error: err.message,
-        status: { description: "Request Error" },
-      });
+      toast.error("⚠️ Failed to update solved question.");
+      // console.error(err);
     }
-  }
-
-  setOutput(outputs);
-  setError(null);
-};
-
+    setError(null);
+  };
 
   return (
     <Box display="flex" sx={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
@@ -129,9 +214,16 @@ const handleBatchSubmission = async (isRealCases) => {
         elevation={3}
         sx={{ width: "50%", p: 3, m: 2, borderRadius: 2, overflowY: "auto" }}
       >
-        <Typography variant="h4" gutterBottom>
-          {challenge.questionName}
-        </Typography>
+        <Box display="flex" justifyContent="space-between">
+          <Typography variant="h4" gutterBottom>
+            {challenge.questionName}
+          </Typography>
+          {solvedQuestionsData.includes(Number(challengeIndex)) && (
+            <Box sx={{ display: "flex", alignItems: "center", p: 1 }}>
+              <Typography sx={{ color: "green" }}>Solved</Typography>
+            </Box>
+          )}
+        </Box>
         <Typography variant="body1" gutterBottom>
           {challenge.questionDescription}
         </Typography>
@@ -194,14 +286,14 @@ const handleBatchSubmission = async (isRealCases) => {
           <Button
             variant="outlined"
             color="secondary"
-            onClick={() => handleBatchSubmission(false)}
+            onClick={handleTestcasesRun}
           >
             Run
           </Button>
           <Button
             variant="contained"
             color="primary"
-            onClick={() => handleBatchSubmission(true)}
+            onClick={handleTestcasesSubmission}
           >
             Submit
           </Button>
