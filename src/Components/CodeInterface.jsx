@@ -15,13 +15,12 @@ import {
 import Editor from "@monaco-editor/react";
 import arr from "./languages";
 
-const CodeInterface = ({ userToken, solvedQuestionsData }) => {
+const CodeInterface = ({userToken, challengeIndex, questionNames, setQuestionNames }) => {
   const [code, setCode] = useState("Your code goes here!");
   const [langID, setLangID] = useState("71");
   const [challenge, setChallenge] = useState({});
   const [output, setOutput] = useState(null);
   const [error, setError] = useState(null);
-  const challengeIndex = localStorage.getItem("challenge-index");
 
   useEffect(() => {
     const fetchQuestionById = async () => {
@@ -35,7 +34,6 @@ const CodeInterface = ({ userToken, solvedQuestionsData }) => {
           }
         );
         setChallenge(response.data);
-        console.log(response.data);
       } catch (e) {
         console.log("Error fetching question:", e);
       }
@@ -218,11 +216,6 @@ const CodeInterface = ({ userToken, solvedQuestionsData }) => {
           <Typography variant="h4" gutterBottom>
             {challenge.questionName}
           </Typography>
-          {solvedQuestionsData.includes(Number(challengeIndex)) && (
-            <Box sx={{ display: "flex", alignItems: "center", p: 1 }}>
-              <Typography sx={{ color: "green" }}>Solved</Typography>
-            </Box>
-          )}
         </Box>
         <Typography variant="body1" gutterBottom>
           {challenge.questionDescription}
