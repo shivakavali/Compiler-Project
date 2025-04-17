@@ -11,17 +11,27 @@ import {
   MenuItem,
   Grid,
   TextField,
+  ToggleButton,
 } from "@mui/material";
 import Editor from "@monaco-editor/react";
 import arr from "./languages";
+import QuestionList from "./QuestionList";
+import './CodeInterface.css';
 
-const CodeInterface = ({userToken, challengeIndex, questionNames, setQuestionNames }) => {
+const CodeInterface = ({
+  userToken,
+  challengeIndex,
+  questionNames,
+  setChallengeIndex,
+}) => {
   const [code, setCode] = useState("Your code goes here!");
   const [langID, setLangID] = useState("71");
   const [challenge, setChallenge] = useState({});
   const [output, setOutput] = useState(null);
   const [error, setError] = useState(null);
+  const [showQuestions, setShowQuestions] = useState(false);
 
+  // console.log(questionNames);
   useEffect(() => {
     const fetchQuestionById = async () => {
       try {
@@ -204,121 +214,81 @@ const CodeInterface = ({userToken, challengeIndex, questionNames, setQuestionNam
     setError(null);
   };
 
+  const handleShowQuestions = (index) => {
+    setChallengeIndex(index);
+  };
   return (
-    <Box display="flex" sx={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
-      {/* Left Panel */}
-      <Box></Box>
-      <Paper
-        elevation={3}
-        sx={{ width: "50%", p: 3, m: 2, borderRadius: 2, overflowY: "auto" }}
-      >
-        <Box display="flex" justifyContent="space-between">
-          <Typography variant="h4" gutterBottom>
-            {challenge.questionName}
-          </Typography>
-        </Box>
-        <Typography variant="body1" gutterBottom>
-          {challenge.questionDescription}
-        </Typography>
-
-        {challenge.sampleTestCases?.map((test, index) => (
-          <Box key={index} mt={2} p={2} bgcolor="#f0f0f0" borderRadius={2}>
-            <Typography variant="subtitle1" fontWeight="bold">
-              Example {index + 1}
-            </Typography>
-            <Typography>Input: {JSON.stringify(test.input)}</Typography>
-            <Typography>
-              Expected Output: {JSON.stringify(test.output)}
-            </Typography>
+    <Box display="flex" className="code-interface-container">
+      
+      <ToggleButton onClick={() => setShowQuestions(!showQuestions)}>{showQuestions ? "On" : "Off" }</ToggleButton>
+      {showQuestions && <QuestionList setChallengeIndex={setChallengeIndex} questionNames={questionNames} setShowQuestions={setShowQuestions} />}
+        <Paper elevation={3} className="challenge-paper">
+          <Box className="challenge-header">
+            <Typography variant="h4" gutterBottom>{challenge.questionName}</Typography>
           </Box>
-        ))}
 
-        <Box mt={3}>
-          <Typography variant="h6">Difficulty</Typography>
-          <Typography>{challenge.questionDifficulty}</Typography>
-        </Box>
+          <Typography variant="body1" gutterBottom>{challenge.questionDescription}</Typography>
 
-        <Box mt={2}>
-          <Typography variant="h6">Topics</Typography>
-          <Typography>{challenge.topics?.join(", ")}</Typography>
-        </Box>
-      </Paper>
+          {challenge.sampleTestCases?.map((test, index) => (
+            <Box key={index} className="test-case-box">
+              <Typography variant="subtitle1" fontWeight="bold">Example {index + 1}</Typography>
+              <Typography>Input: {JSON.stringify(test.input)}</Typography>
+              <Typography>Expected Output: {JSON.stringify(test.output)}</Typography>
+            </Box>
+          ))}
+
+          <Box className="challenge-difficulty">
+            <Typography variant="h6">Difficulty</Typography>
+            <Typography>{challenge.questionDifficulty}</Typography>
+          </Box>
+
+          <Box className="challenge-topics">
+            <Typography variant="h6">Topics</Typography>
+            <Typography>{challenge.topics?.join(", ")}</Typography>
+          </Box>
+        </Paper>
+      
 
       {/* Right Panel */}
       <Box flex={1} display="flex" flexDirection="column" p={2}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+        <Box className="editor-header">
           <Typography variant="h6">Code Editor</Typography>
-          <Select
-            value={langID}
-            onChange={(e) => setLangID(e.target.value)}
-            size="small"
-          >
+          <Select value={langID} onChange={(e) => setLangID(e.target.value)} size="small" >
             {arr.map((item) => (
-              <MenuItem key={item.id} value={item.id}>
-                {item.name}
-              </MenuItem>
+              <MenuItem key={item.id} value={item.id}> {item.name} </MenuItem>
             ))}
           </Select>
         </Box>
 
-        <Paper elevation={3} sx={{ flex: 1, p: 1, mb: 2, borderRadius: 2 }}>
-          <Editor
-            height="50vh"
-            defaultLanguage="python"
-            value={code}
-            onChange={(val) => setCode(val || "")}
-          />
+
+        <Paper elevation={3} className="editor-paper">
+          <Editor height="50vh" defaultLanguage="python" value={code} onChange={(val) => setCode(val || "")} />
         </Paper>
 
-        <Box display="flex" justifyContent="flex-end" gap={2}>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleTestcasesRun}
-          >
-            Run
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleTestcasesSubmission}
-          >
-            Submit
-          </Button>
+        <Box className="editor-actions">
+          <Button variant="outlined" color="secondary" onClick={handleTestcasesRun}> Run </Button>
+          <Button variant="contained" color="primary" onClick={handleTestcasesSubmission}> Submit </Button>
         </Box>
+
 
         <Grid container spacing={2} mt={1}>
           {error ? (
             <Grid item xs={12}>
-              <Typography color="error" fontWeight="bold">
-                Error
-              </Typography>
+              <Typography className="error-title">Error</Typography>
               <TextField
                 fullWidth
                 variant="outlined"
                 multiline
                 minRows={4}
                 value={JSON.stringify(error, null, 2)}
+                className="error-textfield"
               />
             </Grid>
           ) : (
             output?.map((res, index) => (
               <Grid item xs={12} key={index}>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  sx={{
-                    color: res.success ? "green" : "red",
-                  }}
-                >
-                  <Typography variant="subtitle1">
-                    Test Case {index + 1}
-                  </Typography>
+                <Box className={`testcase-header ${res.success ? 'success-text' : 'error-text'}`}>
+                  <Typography variant="subtitle1">Test Case {index + 1}</Typography>
                   <Typography>{res.status?.description || "Error"}</Typography>
                 </Box>
                 <TextField
@@ -331,15 +301,13 @@ const CodeInterface = ({userToken, challengeIndex, questionNames, setQuestionNam
                       ? `[${res.actualOutput.join(", ")}]`
                       : res.actualOutput ?? res.error
                   }
-                  sx={{
-                    backgroundColor: res.success ? "#e6ffe6" : "#ffe6e6",
-                    borderRadius: 1,
-                  }}
+                  className={`testcase-output ${res.success ? 'success-bg' : 'error-bg'}`}
                 />
               </Grid>
             ))
           )}
         </Grid>
+
       </Box>
     </Box>
   );

@@ -1,0 +1,83 @@
+
+
+.challenge-paper {
+    padding: 24px;
+    margin: 16px;
+    border-radius: 16px;
+    overflow-y: auto;
+  }
+  
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .test-case-box {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f0f0f0;
+    border-radius: 16px;
+  }
+  
+  .challenge-difficulty {
+    margin-top: 24px;
+  }
+  
+  .challenge-topics {
+    margin-top: 16px;
+  }
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .editor-paper {
+    max-width: 100%;
+    padding: 8px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+  }
+  
+  .editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+  }
+  
+  .error-title {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .error-textfield {
+    border-radius: 8px;
+  }
+  
+  .testcase-header {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .success-text {
+    color: green;
+  }
+  
+  .error-text {
+    color: red;
+  }
+  
+  .testcase-output {
+    border-radius: 8px;
+  }
+  
+  .success-bg {
+    background-color: #e6ffe6;
+  }
+  
+  .error-bg {
+    background-color: #ffe6e6;
+  }
+  
