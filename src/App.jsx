@@ -3,13 +3,11 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import ProblemSet from "./Components/ProblemSet";
 import CodeInterface from "./Components/CodeInterface";
-
+import QuestionList from "./Components/QuestionList";
 function App() {
   const [userToken, setUserToken] = useState(
-    "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9DVVNUT01FUiIsInN1YiI6InNoaXZhMTIzIiwiaWF0IjoxNzQ0ODk2NDA1LCJleHAiOjE3NDQ5MzI0MDV9.O2ggcbuCEwCwoEbjcxNlzT9BCFgH-Zj5AqXm55AQypE"
-  );
+    "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9DVVNUT01FUiIsInN1YiI6InNoaXZhMTIzIiwiaWF0IjoxNzQ0OTA1NjA2LCJleHAiOjE3NDQ5NDE2MDZ9.6aUV_m4NgzV96woK-nBMob2pvXZ61Fx55u4XheFj9fc");
   const [challengeIndex, setChallengeIndex] = useState(1);
   const [questionsData, setQuestionsData] = useState([]);
   const [questionNames, setQuestionNames] = useState([]);
@@ -70,7 +68,7 @@ function App() {
         userToken={userToken}
         challengeIndex={challengeIndex}
         questionNames={questionNames}
-        setQuestionNames={questionNames}
+        setChallengeIndex={setChallengeIndex}
       />
       <ToastContainer />
     </div>
