@@ -31,7 +31,6 @@ const CodeInterface = ({
   const [error, setError] = useState(null);
   const [showQuestions, setShowQuestions] = useState(false);
 
-  // console.log(questionNames);
   useEffect(() => {
     const fetchQuestionById = async () => {
       try {
@@ -50,6 +49,7 @@ const CodeInterface = ({
     };
     fetchQuestionById();
   }, [challengeIndex]);
+  console.log(challenge);
 
   const parseOutput = (output) => {
     try {
@@ -87,27 +87,25 @@ const CodeInterface = ({
             params: { base64_encoded: "false", wait: "true" },
             headers: {
               "Content-Type": "application/json",
-              "x-rapidapi-key":
-                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+              "x-rapidapi-key": "d6c75e6052msh8fbf3dd8c782bb3p1da22fjsn74676855c423",
               "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
             },
           }
         );
-
-        console.log(response.data);
+        // console.log(response.data);
         const actual = parseOutput(response.data.stdout);
         const error = parseOutput(response.data.stderr);
         const expected = testCase.output;
 
         const isSuccess = JSON.stringify(actual) === JSON.stringify(expected);
-        const statusDesc = response.data.status?.description || "No Status";
+        // console.log("actual output:", actual, " expected:", expected, " Error:", error, "  isSuccess:", isSuccess );
 
         outputs.push({
           input: testCase.input,
           expectedOutput: expected,
           actualOutput: actual ? actual : error,
           success: isSuccess,
-          status: { description: isSuccess ? "Accepted" : statusDesc }, // force override
+          status: { description: isSuccess ? "Accepted" : "Wrong Answer" },
         });
 
         await sleep(1500);
@@ -133,6 +131,7 @@ const CodeInterface = ({
       : [];
 
     if (!testCases.length) {
+      console.log()
       setError("No test cases found.");
     }
 
@@ -152,7 +151,7 @@ const CodeInterface = ({
             headers: {
               "Content-Type": "application/json",
               "x-rapidapi-key":
-                "f733164b1dmshf2aa007b023b489p1ee2f8jsnf7d0d6311ed3",
+                "23129ead31msh0dc114176a49a8cp11cf50jsnb522c12cde7d",
               "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
             },
           }
@@ -216,98 +215,99 @@ const CodeInterface = ({
 
   const handleShowQuestions = (index) => {
     setChallengeIndex(index);
+    setShowQuestions(false);
   };
   return (
-    <Box display="flex" className="code-interface-container">
+    <Box className="code-interface-container">
       
-      <ToggleButton onClick={() => setShowQuestions(!showQuestions)}>{showQuestions ? "On" : "Off" }</ToggleButton>
-      {showQuestions && <QuestionList setChallengeIndex={setChallengeIndex} questionNames={questionNames} setShowQuestions={setShowQuestions} />}
-        <Paper elevation={3} className="challenge-paper">
-          <Box className="challenge-header">
+      <Box className="code-interface-header">
+        <ToggleButton className="code-interface-toggle-button"  onClick={() => setShowQuestions(!showQuestions)}>{showQuestions ? "" : "Question list"}</ToggleButton>
+        {showQuestions && <QuestionList setChallengeIndex={setChallengeIndex} questionNames={questionNames} setShowQuestions={setShowQuestions} />}
+      </Box>
+      <Box className="question-editor-section">
+        <Paper className="question-section">
+          <Box className="question-header">
             <Typography variant="h4" gutterBottom>{challenge.questionName}</Typography>
           </Box>
-
-          <Typography variant="body1" gutterBottom>{challenge.questionDescription}</Typography>
-
+          <Typography className="question-desc" variant="body1" gutterBottom>{challenge.questionDescription}</Typography>
           {challenge.sampleTestCases?.map((test, index) => (
-            <Box key={index} className="test-case-box">
-              <Typography variant="subtitle1" fontWeight="bold">Example {index + 1}</Typography>
-              <Typography>Input: {JSON.stringify(test.input)}</Typography>
-              <Typography>Expected Output: {JSON.stringify(test.output)}</Typography>
+            <Box key={index} className="quetion-example-container">
+              <Typography className="question-example" variant="h6">Example {index + 1}</Typography>
+              <Typography className="question-details">Input: {JSON.stringify(test.input)}</Typography>
+              <Typography className="question-details">Output: {JSON.stringify(test.output)}</Typography>
             </Box>
           ))}
-
-          <Box className="challenge-difficulty">
+          <Box className="question-difficulty">
             <Typography variant="h6">Difficulty</Typography>
             <Typography>{challenge.questionDifficulty}</Typography>
           </Box>
-
-          <Box className="challenge-topics">
+          <Box className="question-topics">
             <Typography variant="h6">Topics</Typography>
             <Typography>{challenge.topics?.join(", ")}</Typography>
           </Box>
         </Paper>
-      
+        
 
-      {/* Right Panel */}
-      <Box flex={1} display="flex" flexDirection="column" p={2}>
-        <Box className="editor-header">
-          <Typography variant="h6">Code Editor</Typography>
-          <Select value={langID} onChange={(e) => setLangID(e.target.value)} size="small" >
-            {arr.map((item) => (
-              <MenuItem key={item.id} value={item.id}> {item.name} </MenuItem>
-            ))}
-          </Select>
-        </Box>
-
-
-        <Paper elevation={3} className="editor-paper">
-          <Editor height="50vh" defaultLanguage="python" value={code} onChange={(val) => setCode(val || "")} />
-        </Paper>
-
-        <Box className="editor-actions">
-          <Button variant="outlined" color="secondary" onClick={handleTestcasesRun}> Run </Button>
-          <Button variant="contained" color="primary" onClick={handleTestcasesSubmission}> Submit </Button>
-        </Box>
+        {/* Right Panel */}
+        <Box className="editor-section" flex={1} display="flex" flexDirection="column" p={2}>
+          <Box className="code-interface-editor-header">
+            <Typography variant="h6">Code Editor</Typography>
+            <Select className="code-editor-lang-select" value={langID} onChange={(e) => setLangID(e.target.value)} size="small" >
+              {arr.map((item) => (
+                <MenuItem className="code-editor-lang-name" key={item.id} value={item.id}> {item.name} </MenuItem>
+              ))}
+            </Select>
+          </Box>
 
 
-        <Grid container spacing={2} mt={1}>
-          {error ? (
-            <Grid item xs={12}>
-              <Typography className="error-title">Error</Typography>
-              <TextField
-                fullWidth
-                variant="outlined"
-                multiline
-                minRows={4}
-                value={JSON.stringify(error, null, 2)}
-                className="error-textfield"
-              />
-            </Grid>
-          ) : (
-            output?.map((res, index) => (
-              <Grid item xs={12} key={index}>
-                <Box className={`testcase-header ${res.success ? 'success-text' : 'error-text'}`}>
-                  <Typography variant="subtitle1">Test Case {index + 1}</Typography>
-                  <Typography>{res.status?.description || "Error"}</Typography>
-                </Box>
+          <Paper elevation={3} className="code-editor-text-field-paper">
+            <Editor className="code-editor-text-field" height="50vh" defaultLanguage="python" value={code} onChange={(val) => setCode(val || "")} />
+          </Paper>
+
+          <Box className="editor-actions">
+            <Button variant="outlined" color="secondary" onClick={handleTestcasesRun}> Run </Button>
+            <Button variant="contained" color="primary" onClick={handleTestcasesSubmission}> Submit </Button>
+          </Box>
+
+
+          <Grid container spacing={2} mt={1}>
+            {error ? (
+              <Grid item xs={12}>
+                <Typography className="error-title">Error</Typography>
                 <TextField
                   fullWidth
-                  multiline
-                  minRows={2}
                   variant="outlined"
-                  value={
-                    Array.isArray(res.actualOutput)
-                      ? `[${res.actualOutput.join(", ")}]`
-                      : res.actualOutput ?? res.error
-                  }
-                  className={`testcase-output ${res.success ? 'success-bg' : 'error-bg'}`}
+                  multiline
+                  minRows={4}
+                  value={JSON.stringify(error, null, 2)}
+                  className="error-textfield"
                 />
               </Grid>
-            ))
-          )}
-        </Grid>
+            ) : (
+              output?.map((res, index) => (
+                <Grid item xs={12} key={index}>
+                  <Box className={`testcase-header ${res.success ? 'success-text' : 'error-text'}`}>
+                    <Typography variant="subtitle1">Test Case {index + 1}</Typography>
+                    <Typography>{res.status?.description || "Error"}</Typography>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    variant="outlined"
+                    value={
+                      Array.isArray(res.actualOutput)
+                        ? `[${res.actualOutput.join(", ")}]`
+                        : res.actualOutput ?? res.error
+                    }
+                    className={`testcase-output ${res.success ? 'success-bg' : 'error-bg'}`}
+                  />
+                </Grid>
+              ))
+            )}
+          </Grid>
 
+        </Box>
       </Box>
     </Box>
   );

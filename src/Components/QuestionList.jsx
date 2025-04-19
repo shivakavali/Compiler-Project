@@ -4,7 +4,8 @@ import './QuestionList.css';
 const QuestionList = ({setChallengeIndex, questionNames, setShowQuestions }) => {
 
     const handleQuestion = (index) => {
-        setChallengeIndex(index+1);
+        setChallengeIndex(index + 1);
+        setShowQuestions(false);
     }
     const handleClose = () => {
         setShowQuestions(false);
