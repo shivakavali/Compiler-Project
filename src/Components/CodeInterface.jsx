@@ -18,6 +18,7 @@ import arr from "./languages";
 import QuestionList from "./QuestionList";
 import './CodeInterface.css';
 
+
 const CodeInterface = ({
   userToken,
   challengeIndex,
@@ -87,7 +88,7 @@ const CodeInterface = ({
             params: { base64_encoded: "false", wait: "true" },
             headers: {
               "Content-Type": "application/json",
-              "x-rapidapi-key": "d6c75e6052msh8fbf3dd8c782bb3p1da22fjsn74676855c423",
+              "x-rapidapi-key": import.meta.env.VITE_API_KEY,
               "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
             },
           }
@@ -150,8 +151,7 @@ const CodeInterface = ({
             params: { base64_encoded: "false", wait: "true" },
             headers: {
               "Content-Type": "application/json",
-              "x-rapidapi-key":
-                "23129ead31msh0dc114176a49a8cp11cf50jsnb522c12cde7d",
+              "x-rapidapi-key": process.env.REACT_APP_API_KEY,
               "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
             },
           }

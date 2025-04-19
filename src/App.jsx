@@ -6,8 +6,7 @@ import { ToastContainer } from "react-toastify";
 import CodeInterface from "./Components/CodeInterface";
 import "./App.css";
 function App() {
-  const [userToken, setUserToken] = useState(
-    "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUk9MRV9DVVNUT01FUiIsInN1YiI6InNoaXZhMTIzIiwiaWF0IjoxNzQ1MDgyMDUwLCJleHAiOjE3NDUxMTgwNTB9.v2Kgt1m-exsLgWO5ZmaIRH8-1rpFv6zKXX8jDGkBnGc");
+  const [userToken, setUserToken] = useState(import.meta.env.VITE_USER_TOKEN);
   
   const [challengeIndex, setChallengeIndex] = useState(1);
   const [questionsData, setQuestionsData] = useState([]);
